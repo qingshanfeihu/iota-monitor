@@ -332,7 +332,7 @@ public final class IotaPopup: PopupWrapper {
 
         // 底部：版权信息（左）+ 紧凑文字按钮（右）
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev"
-        let copyright = NSTextField(labelWithString: "IOTA Monitor v\(version) · © 2026 jiangyz · MIT · 基于 exelban/stats")
+        let copyright = NSTextField(labelWithString: "IOTA Monitor v\(version) · © 2026 jiangyz")
         copyright.font = NSFont.systemFont(ofSize: 10)
         copyright.textColor = .tertiaryLabelColor
 

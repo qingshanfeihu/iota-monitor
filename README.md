@@ -42,6 +42,12 @@ open "/Applications/IOTA Monitor.app"
 
 - 组件开关与顺序；货币 USD/CNY；α 手动币价（0=自动）；USD/CNY 汇率兜底；电价 ¥/kWh；hotkey（留空自动探测）；开机自启（需从 .app 运行）
 
+## License
+
+本项目采用 **MIT License** 发布，完整协议见 [LICENSE](LICENSE)。
+
+部分 UI 架构代码改编自开源项目（MIT 协议），其原始协议副本保留在 [Sources/IotaMonitorCore/Vendor/STATS-LICENSE](Sources/IotaMonitorCore/Vendor/STATS-LICENSE)。
+
 ## 说明
 
 - **只读承诺**：本应用对 IOTA Train at Home 及其训练进程零干预——所有 HTTP 请求均为 GET（含 8010 只读 `/health`），子进程仅 nettop/ioreg/ps/curl 等只读工具，SMC 只读功耗键，日志只读；不使用 8010 的任何写接口，也不会启动/停止/重启 IOTA
