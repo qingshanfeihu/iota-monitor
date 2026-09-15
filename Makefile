@@ -3,6 +3,7 @@ BUNDLE_ID = com.jyz.iota-monitor
 BIN = .build/release/IotaMonitor
 APP = $(APP_NAME).app
 VERSION ?= $(shell git describe --tags --always 2>/dev/null || echo v0.0.0)
+APP_VERSION = $(patsubst v%,%,$(VERSION))
 DMG = IOTA-Monitor-$(VERSION)-arm64.dmg
 
 .PHONY: build test app install run restart clean dmg
@@ -26,8 +27,8 @@ app: build
 	<key>CFBundleName</key><string>$(APP_NAME)</string>\n\
 	<key>CFBundleDisplayName</key><string>$(APP_NAME)</string>\n\
 	<key>CFBundlePackageType</key><string>APPL</string>\n\
-	<key>CFBundleShortVersionString</key><string>1.0</string>\n\
-	<key>CFBundleVersion</key><string>1</string>\n\
+	<key>CFBundleShortVersionString</key><string>$(APP_VERSION)</string>\n\
+	<key>CFBundleVersion</key><string>$(APP_VERSION)</string>\n\
 	<key>LSMinimumSystemVersion</key><string>13.0</string>\n\
 	<key>LSUIElement</key><true/>\n\
 	<key>NSHighResolutionCapable</key><true/>\n\
