@@ -330,13 +330,24 @@ public final class IotaPopup: PopupWrapper {
         historyCard.add(self.historyChart, height: 84)
         self.attach(historyCard)
 
-        // 底部按钮（只保留设置与退出；打开IOTA/仪表盘按用户要求移除）
+        // 底部：版权信息（左）+ 紧凑文字按钮（右）
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev"
+        let copyright = NSTextField(labelWithString: "IOTA Monitor v\(version) · © 2026 jiangyz · MIT · 基于 exelban/stats")
+        copyright.font = NSFont.systemFont(ofSize: 10)
+        copyright.textColor = .tertiaryLabelColor
+
         self.actionsRow.orientation = .horizontal
-        self.actionsRow.spacing = 8
+        self.actionsRow.spacing = 12
         self.actionsRow.alignment = .centerY
-        let settingsButton = self.button(title: "设置", action: self.actions.openSettings)
-        let quitButton = self.button(title: "退出", action: self.actions.quit)
-        [settingsButton, quitButton].forEach { self.actionsRow.addArrangedSubview($0) }
+        copyright.translatesAutoresizingMaskIntoConstraints = false
+        self.actionsRow.addArrangedSubview(copyright)
+        let spacer = NSView()
+        spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        self.actionsRow.addArrangedSubview(spacer)
+        let settingsButton = self.textButton(title: "设置", action: self.actions.openSettings)
+        let quitButton = self.textButton(title: "退出", action: self.actions.quit)
+        self.actionsRow.addArrangedSubview(settingsButton)
+        self.actionsRow.addArrangedSubview(quitButton)
         self.actionsRow.setHuggingPriority(.defaultHigh, for: .horizontal)
         self.attach(self.actionsRow)
 
@@ -346,11 +357,13 @@ public final class IotaPopup: PopupWrapper {
         self.reloadHistory()
     }
 
-    private func button(title: String, action: @escaping () -> Void) -> NSButton {
+    /// 紧凑无边框文字按钮（用于底部操作行）。
+    private func textButton(title: String, action: @escaping () -> Void) -> NSButton {
         let button = NSButton(title: title, target: nil, action: nil)
-        button.bezelStyle = .recessed
-        button.controlSize = .small
+        button.isBordered = false
         button.font = NSFont.systemFont(ofSize: 11)
+        button.contentTintColor = .secondaryLabelColor
+        button.focusRingType = .none
         let monitor = ActionMonitor(action: action)
         button.target = monitor
         button.action = #selector(ActionMonitor.fire)
