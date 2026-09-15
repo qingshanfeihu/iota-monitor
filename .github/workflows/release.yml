@@ -1,0 +1,40 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Test, build & publish DMG
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain
+        run: swift --version
+
+      - name: Self tests (50 checks)
+        run: swift run SelfTest
+
+      - name: Build app & DMG (ad-hoc signed)
+        run: |
+          make dmg VERSION="${GITHUB_REF_NAME}"
+          codesign --verify --verbose "IOTA Monitor.app"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          FLAGS=""
+          if [[ "$GITHUB_REF_NAME" == *-* ]]; then
+            FLAGS="--prerelease"
+          fi
+          gh release create "${GITHUB_REF_NAME}" \
+            "IOTA-Monitor-${GITHUB_REF_NAME}-arm64.dmg" \
+            --title "${GITHUB_REF_NAME}" \
+            --generate-notes \
+            $FLAGS

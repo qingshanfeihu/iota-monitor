@@ -1,0 +1,15 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: Self tests
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run checks
+        run: swift run SelfTest
