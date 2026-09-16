@@ -421,6 +421,17 @@ public final class IotaPopup: PopupWrapper {
             if s.appUptime > 60 {
                 subtitle += " · 已运行 \(Self.durationText(s.appUptime))"
             }
+            // 数据新鲜度：慢轮询数据滞后 15 分钟以上时明确提示
+            if let updated = s.earningsUpdatedAt {
+                let age = Date().timeIntervalSince(updated)
+                if age > 3600 {
+                    subtitle += " · 收益数据已 \(Int(age / 3600)) 小时未更新"
+                } else if age > 900 {
+                    subtitle += " · 收益数据已 \(Int(age / 60)) 分钟未更新"
+                }
+            } else {
+                subtitle += " · 收益数据未获取"
+            }
             self.statusSubtitle.stringValue = subtitle
         } else {
             self.statusTitle.stringValue = "◌ IOTA 未运行"

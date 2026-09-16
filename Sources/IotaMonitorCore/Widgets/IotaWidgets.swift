@@ -97,6 +97,12 @@ public final class EarningsWidget: IotaBaseWidget, IotaWidget {
             self.alphaToday = nil
             self.fiatText = ""
         }
+        // 收益数据超过 15 分钟没成功刷新 → 数值后加"…"提示陈旧（API 停摆时不装作实时）
+        if let updated = snapshot.earningsUpdatedAt, Date().timeIntervalSince(updated) > 900 {
+            self.stale = true
+        } else {
+            self.stale = false
+        }
 
         // 近 7 日收益 + 今日实时值
         self.history = snapshot.earnings7d.suffix(7).map { $0.1 }
@@ -108,12 +114,17 @@ public final class EarningsWidget: IotaBaseWidget, IotaWidget {
         self.redraw()
     }
 
+    private var stale: Bool = false
+
     private func textParts() -> [(String, NSColor)] {
         guard let alpha = self.alphaToday else { return [("", .textColor)] }
         var parts: [(String, NSColor)] = [(String(format: "%.2f IOTA", alpha), self.valueColor)]
         if !self.fiatText.isEmpty {
             parts.append((" ", self.valueColor))
             parts.append((self.fiatText, self.secondaryColor))
+        }
+        if self.stale {
+            parts.append((" …", NSColor.systemOrange))
         }
         return parts
     }

@@ -185,7 +185,21 @@ public final class Monitor {
     }
 
     private func detectRunId(from heartbeat: HeartbeatState) {
-        guard IOTAApi.shared.runId != heartbeat.runId else { return }
+        let old = IOTAApi.shared.runId
+        guard old != heartbeat.runId, !old.isEmpty else {
+            if IOTAApi.shared.runId != heartbeat.runId {
+                IOTAApi.shared.runId = heartbeat.runId
+                Store.shared.set(key: "run_id", value: heartbeat.runId)
+            }
+            return
+        }
+        // run 切换：把今日已累计 tokens 冻结进 carryover（metrics 按 run 查询，
+        // 不冻结的话切换瞬间今日 tokens 会被新 run 的 0 值清零）
+        let current = self.snapshot.todayTokens
+        Store.shared.set(key: "tokens_carryover", value: current)
+        Store.shared.set(key: "tokens_carryover_date", value: Self.localDayKey(Date()))
+        Self.debugLog("run switch \(old) -> \(heartbeat.runId), tokens carryover=\(current)")
+
         IOTAApi.shared.runId = heartbeat.runId
         Store.shared.set(key: "run_id", value: heartbeat.runId)
         info("run id → \(heartbeat.runId)", log: self.log)
@@ -322,6 +336,10 @@ public final class Monitor {
                             tokensToday += scores.token_counts?[i] ?? 0
                         }
                     }
+                    // 叠加今日 run 切换前旧 run 已累计的部分
+                    if Store.shared.string(key: "tokens_carryover_date", defaultValue: "") == Self.localDayKey(Date()) {
+                        tokensToday += Store.shared.double(key: "tokens_carryover", defaultValue: 0)
+                    }
                     let epochSeconds: Double = {
                         guard let stamps = scores.timestamps, stamps.count >= 2 else { return 6000 }
                         let diff = stamps[stamps.count-1] - stamps[stamps.count-2]
@@ -337,19 +355,25 @@ public final class Monitor {
                         $0.contribution = scores.act_contribution_percs?[last] ?? 0
                     }
                     HistoryStore.shared.addToDaily(date: Date(), setTokens: tokensToday)
+                    self.mutate { $0.metricsUpdatedAt = Date() }
                 }
             } catch {
                 FileHandle.standardError.write("slowCycle minerMetrics: \(error)\n".data(using: .utf8)!)
             }
         }
 
-        // 收益
+        // 收益（该域名偶发长时间超时：失败稍候重试一次，尽量避免整段数据停摆）
         if !IOTAApi.shared.hotkey.isEmpty {
-            do {
-                let totals = try IOTAApi.shared.entitlementTotals()
+            var totals: EntitlementTotals? = try? IOTAApi.shared.entitlementTotals()
+            if totals == nil {
+                Thread.sleep(forTimeInterval: 15)
+                totals = try? IOTAApi.shared.entitlementTotals()
+            }
+            if let totals = totals {
                 self.applyEarnings(totals)
-            } catch {
-                FileHandle.standardError.write("slowCycle totals: \(error)\n".data(using: .utf8)!)
+                self.mutate { $0.earningsUpdatedAt = Date() }
+            } else {
+                FileHandle.standardError.write("slowCycle totals failed (retry exhausted)\n".data(using: .utf8)!)
             }
             do {
                 let history = try IOTAApi.shared.entitlementHistory()

@@ -297,4 +297,8 @@ public struct IotaSnapshot {
 
     // prices
     public var prices: CoinPrices? = nil
+
+    // 数据新鲜度（慢轮询成功时间；API 长时间不可达时用于标记陈旧显示）
+    public var earningsUpdatedAt: Date? = nil
+    public var metricsUpdatedAt: Date? = nil
 }
